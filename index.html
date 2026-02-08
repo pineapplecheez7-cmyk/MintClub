@@ -6,7 +6,7 @@
 
   <style>
     body {
-      background: radial-gradient(circle at center, #0b1020 0%, #020617 100%);
+      background: #0f172a;
       color: white;
       font-family: Arial, sans-serif;
       display: flex;
@@ -26,17 +26,10 @@
       max-width: 600px;
       text-align: center;
       margin: 20px auto;
-      border: 2px solid #38bdf8;
-      box-shadow: 0 0 20px rgba(56,189,248,0.35),
-                  inset 0 0 8px rgba(255,255,255,0.05);
+      box-shadow: 0 0 20px rgba(0,0,0,0.5);
     }
 
-    h1 {
-      font-size: 2.2em;
-      text-shadow: 0 0 10px rgba(56,189,248,0.6);
-    }
-
-    input {
+    input, button {
       width: 100%;
       padding: 15px;
       margin-top: 15px;
@@ -47,19 +40,13 @@
     }
 
     button {
-      width: 100%;
-      padding: 15px;
-      margin-top: 15px;
-      border-radius: 6px;
-      border: none;
-      font-size: 1.1em;
       background: #38bdf8;
       color: black;
       cursor: pointer;
       font-weight: bold;
     }
 
-    #error {
+    #error, #tradeError {
       color: #f87171;
       margin-top: 10px;
       font-weight: bold;
@@ -69,57 +56,137 @@
 
 <body>
 
-  <div class="box" id="verifyBox">
-    <h1>🔒 Verification Required</h1>
-    <p>Enter a valid friend name:</p>
+<!-- VERIFY -->
+<div class="box" id="verifyBox">
+  <h1>🔒 Verification Required</h1>
+  <p>Enter a valid friend name:</p>
 
-    <input id="nameInput" placeholder="Friend name">
-    <input id="passwordInput" type="password" placeholder="Password (Austin only)" style="display:none;">
-    <button id="verifyBtn">Verify</button>
+  <input id="nameInput" placeholder="Friend name">
+  <input id="passwordInput" type="password" placeholder="Password (Austin only)" style="display:none;">
+  <button id="verifyBtn">Verify</button>
 
-    <p id="error"></p>
-  </div>
+  <p id="error"></p>
+</div>
 
-  <script>
-    const ownerName = "Austin";
-    const ownerPassword = "vpg37kmq";
+<!-- MENU -->
+<div class="box" id="menuBox" style="display:none;">
+  <h1>Main Menu</h1>
+  <p>Welcome, <span id="player"></span>!</p>
+  <p>Coins: 💰 <span id="coins"></span></p>
 
-    const validNames = ["Austin", "Mucheng", "Mark", "Ethan", "Antonio"];
+  <button id="addCoinsBtn">+100 Coins (Owner)</button>
 
-    const nameInput = document.getElementById("nameInput");
-    const passwordInput = document.getElementById("passwordInput");
-    const verifyBtn = document.getElementById("verifyBtn");
-    const error = document.getElementById("error");
+  <h2>Gift Coins</h2>
+  <input id="tradeFriend" placeholder="Friend name">
+  <input id="tradeAmount" type="number" placeholder="Amount">
+  <button id="tradeBtn">Send Gift</button>
 
-    // Show password box only if Austin is typed
-    nameInput.addEventListener("input", () => {
-      if (nameInput.value.trim().toLowerCase() === "austin") {
-        passwordInput.style.display = "block";
-      } else {
-        passwordInput.style.display = "none";
-      }
-    });
+  <p id="tradeError"></p>
 
-    verifyBtn.addEventListener("click", () => {
-      const name = nameInput.value.trim();
-      const pass = passwordInput.value;
+  <button id="signOutBtn" style="margin-top:25px;background:#f87171;">
+    Sign Out
+  </button>
+</div>
 
-      const match = validNames.find(n => n.toLowerCase() === name.toLowerCase());
+<script>
+const ownerName = "Austin";
+const ownerPassword = "vpg37kmq";
+const validNames = ["Austin","Mucheng","Mark","Ethan","Antonio"];
 
-      if (!match) {
-        error.innerText = "Invalid name";
-        return;
-      }
+// Load coins
+let friendsCoins = JSON.parse(localStorage.getItem("friendsCoins") || "{}");
+validNames.forEach(name => {
+  if (!(name in friendsCoins)) friendsCoins[name] = 500;
+});
+localStorage.setItem("friendsCoins", JSON.stringify(friendsCoins));
 
-      if (match === ownerName && pass !== ownerPassword) {
-        error.innerText = "Wrong password";
-        return;
-      }
+const verifyBox = document.getElementById("verifyBox");
+const menuBox = document.getElementById("menuBox");
+const nameInput = document.getElementById("nameInput");
+const passwordInput = document.getElementById("passwordInput");
+const error = document.getElementById("error");
 
-      error.innerText = "";
-      alert("Welcome " + match + "!");
-    });
-  </script>
+nameInput.addEventListener("input", () => {
+  if (nameInput.value.trim().toLowerCase() === "austin") {
+    passwordInput.style.display = "block";
+  } else {
+    passwordInput.style.display = "none";
+  }
+});
+
+function showMenu(name) {
+  verifyBox.style.display = "none";
+  menuBox.style.display = "block";
+  document.getElementById("player").innerText = name;
+  document.getElementById("coins").innerText = friendsCoins[name];
+
+  if (name !== ownerName) {
+    document.getElementById("addCoinsBtn").style.display = "none";
+  }
+}
+
+document.getElementById("verifyBtn").onclick = () => {
+  const name = nameInput.value.trim();
+  const pass = passwordInput.value;
+
+  const match = validNames.find(n => n.toLowerCase() === name.toLowerCase());
+
+  if (!match) {
+    error.innerText = "Invalid name";
+    return;
+  }
+
+  if (match === ownerName && pass !== ownerPassword) {
+    error.innerText = "Wrong password";
+    return;
+  }
+
+  sessionStorage.setItem("playerName", match);
+  error.innerText = "";
+  showMenu(match);
+};
+
+document.getElementById("addCoinsBtn").onclick = () => {
+  const player = sessionStorage.getItem("playerName");
+  if (player !== ownerName) return;
+
+  friendsCoins[player] += 100;
+  localStorage.setItem("friendsCoins", JSON.stringify(friendsCoins));
+  document.getElementById("coins").innerText = friendsCoins[player];
+};
+
+document.getElementById("tradeBtn").onclick = () => {
+  const player = sessionStorage.getItem("playerName");
+  const recipientInput = document.getElementById("tradeFriend").value.trim();
+  const recipient = validNames.find(n => n.toLowerCase() === recipientInput.toLowerCase());
+  let amount = Math.floor(Number(document.getElementById("tradeAmount").value));
+
+  if (!recipient)
+    return document.getElementById("tradeError").innerText = "Friend not found";
+
+  if (recipient === player)
+    return document.getElementById("tradeError").innerText = "Cannot gift yourself";
+
+  if (isNaN(amount) || amount <= 0)
+    return document.getElementById("tradeError").innerText = "Enter valid amount";
+
+  if (friendsCoins[player] < amount)
+    return document.getElementById("tradeError").innerText = "Not enough coins";
+
+  friendsCoins[player] -= amount;
+  friendsCoins[recipient] += amount;
+
+  localStorage.setItem("friendsCoins", JSON.stringify(friendsCoins));
+  document.getElementById("coins").innerText = friendsCoins[player];
+  document.getElementById("tradeError").innerText =
+    `Sent ${amount} coins to ${recipient}`;
+};
+
+document.getElementById("signOutBtn").onclick = () => {
+  sessionStorage.removeItem("playerName");
+  location.reload();
+};
+</script>
 
 </body>
 </html>
