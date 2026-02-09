@@ -74,7 +74,9 @@
   <p>Welcome, <span id="player"></span>!</p>
   <p>Coins: 💰 <span id="coins"></span></p>
 
-  <button id="addCoinsBtn">+100 Coins (Owner)</button>
+  <!-- OWNER CAN TYPE AMOUNT -->
+  <input id="ownerAmount" type="number" placeholder="Amount to add (Owner only)">
+  <button id="addCoinsBtn">Add Coins</button>
 
   <h2>Gift Coins</h2>
   <input id="tradeFriend" placeholder="Friend name">
@@ -121,6 +123,7 @@ function showMenu(name) {
   document.getElementById("coins").innerText = friendsCoins[name];
 
   if (name !== ownerName) {
+    document.getElementById("ownerAmount").style.display = "none";
     document.getElementById("addCoinsBtn").style.display = "none";
   }
 }
@@ -150,9 +153,14 @@ document.getElementById("addCoinsBtn").onclick = () => {
   const player = sessionStorage.getItem("playerName");
   if (player !== ownerName) return;
 
-  friendsCoins[player] += 100;
+  let amount = Math.floor(Number(document.getElementById("ownerAmount").value));
+
+  if (isNaN(amount) || amount <= 0) return;
+
+  friendsCoins[player] += amount;
   localStorage.setItem("friendsCoins", JSON.stringify(friendsCoins));
   document.getElementById("coins").innerText = friendsCoins[player];
+  document.getElementById("ownerAmount").value = "";
 };
 
 document.getElementById("tradeBtn").onclick = () => {
@@ -179,7 +187,7 @@ document.getElementById("tradeBtn").onclick = () => {
   localStorage.setItem("friendsCoins", JSON.stringify(friendsCoins));
   document.getElementById("coins").innerText = friendsCoins[player];
   document.getElementById("tradeError").innerText =
-    `Sent ${amount} coins to ${recipient}`;
+    "Sent " + amount + " coins to " + recipient;
 };
 
 document.getElementById("signOutBtn").onclick = () => {
@@ -190,4 +198,5 @@ document.getElementById("signOutBtn").onclick = () => {
 
 </body>
 </html>
+
 
